@@ -54,7 +54,7 @@ pymupdf4llm = "^0.0"
 matplotlib = "^3.8.4"
 streamlit = "^1.32.2"
 jupyter = "^1.0.0"
-notebook = "^7.1.2"
+notebook = "^7.3.2"
 
 # 딥러닝 및 머신러닝 관련 패키지
 torch = "^2.2"

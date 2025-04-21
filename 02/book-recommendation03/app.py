@@ -7,7 +7,7 @@ from node import create_book_letter_graph  # node.py에 있는 create_book_lette
 st.set_page_config(page_title="📚 Book Letter Generator", page_icon="📖")
 st.title("📚 북 레터 생성기")
 
-keyword = st.text_input("🔍 추천 키워드를 입력하세요:")
+keyword = st.text_input("🔍 검색 키워드를 입력하세요:")
 
 if keyword.strip() == "":
     st.warning("키워드를 입력해주세요!")

@@ -93,19 +93,28 @@ def write_book_letter(state: State) -> State:
 
 아래 책 제목들을 자연스럽게 소개하고 추천해줘.
 책마다 간단한 추천 이유도 살짝 곁들여서.
+어떤 사람에게, 어떤 상황에서 읽으면 좋을지 추가할 것. 
 북레터 제목은 부드러운 질문 형태로 작성할 것.
+최신 사회 이슈나 상황과 관련된 책이라면 자연스럽게 연결시켜줘.
+
+책 구문을 함께 추가해도 좋을 것 같아.
+그리고 등장인물의 이름을 거론해도 좋아. 
 
 책 목록:
 {chr(10).join(f"- {title}" for title in book_titles)}
 
 출력은 자연스러운 한국어로 작성할 것.
+최종 형태는 하나의 편지 형식어야 돼.
+편지 마지막에서 수신인 정보는 없어야해. 
+
+교보문고 사이트에서 해당 책의 구매링크가 존재한다면 추가해줬으면 해.
 """
 
     writer_llm = ChatOpenAI(model="gpt-4o-mini", temperature=1)
     messages = [HumanMessage(content=prompt)]
     response = writer_llm.invoke(messages)
 
-    return {"messages": [HumanMessage(content=f"Generated Book Letter:\n\n{response.content}")]}
+    return {"messages": [HumanMessage(content=f"\n\n{response.content}")]}
 
 
 # Graph 구성

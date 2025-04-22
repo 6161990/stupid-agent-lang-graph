@@ -15,6 +15,9 @@ load_dotenv()
 
 NAVER_CLIENT_ID = os.getenv("NAVER_CLIENT_ID")
 NAVER_CLIENT_SECRET = os.getenv("NAVER_CLIENT_SECRET")
+langchain_traceing_v2 = os.getenv("LANGCHAIN_TRACING_V2")
+langchain_endpoint = os.getenv("LANGCHAIN_ENDPOINT")
+langchain_key = os.getenv("LANGCHAIN_API_KEY")
 
 
 # 책 검색 함수

@@ -121,6 +121,7 @@ def write_book_letter(state: State) -> State:
 # Graph 구성
 def create_book_letter_graph():
     workflow = StateGraph(State)
+    workflow.tracing_v2 = True
 
     workflow.add_node("search_book_titles", search_book_titles)
     workflow.add_node("detect_category", detect_category)  # 추가

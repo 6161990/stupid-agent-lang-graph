@@ -83,9 +83,9 @@ def detect_category(state: State) -> State:
     llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
 
     system_prompt = f"""
-    다음 키워드를 보고, 가장 적절한 카테고리를 선택하세요.
-    가능한 카테고리: {get_usable_category}
-    단 하나만 골라야 하며, 답변은 카테고리 이름만 출력하세요.
+    Given the following keyword, select the most appropriate category.
+    Only output the category name in korean.
+    The selected category must exist in {get_usable_category}.
     """
 
     prompt = f"{system_prompt}\n\n키워드: {keyword}"
@@ -110,7 +110,7 @@ def write_book_letter(state: State) -> State:
 
     prompt = build_book_letter_prompt(category, book_list)
 
-    writer_llm = ChatOpenAI(model="gpt-4o-mini", temperature=1)
+    writer_llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=1)
     messages = [HumanMessage(content=prompt)]
     response = writer_llm.invoke(messages)
 

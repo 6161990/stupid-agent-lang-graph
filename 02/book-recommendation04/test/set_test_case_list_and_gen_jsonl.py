@@ -1,0 +1,69 @@
+import json
+
+# messages 필드를 추가한 자동 평가용 + 커스텀 평가용 복합 테스트셋
+test_cases = [
+    {
+        "inputs": {
+            "keyword": "이별 후 위로"
+        },
+        "expected_output": {
+            "category": "감성", # LangSmith 가 자동 평가할 수 있는 항목 : string_match
+            "messages": [ # LangSmith 가 자동 평가할 수 있는 항목 : embedding_distance
+                {
+                    "content": "이별의 아픔을 다독이는 데 도움이 되는 책을 소개합니다."
+                }
+            ],
+            "criteria": { # 수동 커스텀 평가 : evaluate_letter
+                "should_start_with_greeting": True,
+                "should_end_without_recipient": True,
+                "should_use_question_title": True,
+                "book_title_count": 3
+            }
+        }
+    },
+    {
+        "inputs": {
+            "keyword": "스타트업 창업"
+        },
+        "expected_output": {
+            "category": "산업",
+            "messages": [
+                {
+                    "content": "빠르게 변하는 시장에서 방향을 찾고 싶다면 『예측가능한 불확실성』을 추천합니다. 실리콘밸리의 창업 사례와 전략이 담긴 이 책은 혼란 속에서도 실행할 수 있는 인사이트를 제공합니다."
+                }
+            ],
+            "criteria": {
+                "should_start_with_greeting": True,
+                "should_include_concrete_examples": True,
+                "tone": "전문적",
+                "book_title_count": 3
+            }
+        }
+    },
+    {
+        "inputs": {
+            "keyword": "죽음에 대한 철학"
+        },
+        "expected_output": {
+            "category": "철학",
+            "messages": [
+                {
+                    "content": "『죽음에 관하여』는 삶의 끝에 대한 두려움을 철학적으로 마주하게 해줍니다. 『연년세세』는 평범한 순간의 소중함을 되새기게 해주는 책입니다. 오늘을 살아가는 이유를 생각하게 만드는 이 책들을 추천합니다."
+                }
+            ],
+            "criteria": {
+                "should_start_with_greeting": True,
+                "should_use_question_title": True,
+                "tone": "감성",
+                "book_title_count": 3
+            }
+        }
+    }
+]
+
+with open("book_letter_eval_dataset.jsonl", "w", encoding="utf-8") as f:
+    for item in test_cases:
+        json.dump(item, f, ensure_ascii=False)
+        f.write("\n")
+
+print("✅ 저장 완료: book_letter_eval_dataset.jsonl")

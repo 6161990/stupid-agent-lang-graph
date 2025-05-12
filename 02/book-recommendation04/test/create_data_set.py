@@ -62,27 +62,25 @@ runs = client.list_runs(
 
 for run in runs:
     feedbacks = client.list_feedback(run_id=run.id)
-    print(feedbacks)
-    print("feedbacks")
     scores = {fb.key: fb.score for fb in feedbacks}
 
-    if scores.get("category_match") is True and scores.get("embedding_distance_score", 0) >= 0.85:
-        input_text = run.inputs.get("keyword")
-        print(input_text)
-        messages = run.outputs.get("messages", [])
-        if messages and hasattr(messages[0], "content"):
-            output_text = messages[0].content
+    if scores.get("category_match") == 1.0 and scores.get("embedding_distance_score", 0) >= 0.85:
+        example_id = run.extra.get("metadata").get("reference_example_id")
+        example = client.read_example(example_id)
 
-            fine_tune_data.append({
-                "messages": [
-                    {"role": "user", "content": input_text},
-                    {"role": "assistant", "content": output_text}
-                ],
-                "metadata": {
-                    "run_id": run.id,
-                    "scores": scores
-                }
-            })
+        input_text = example.inputs.get("keyword")
+        output_text = example.outputs.get("messages")[0].get("content")
+
+        fine_tune_data.append({
+            "messages": [
+                {"role": "user", "content": input_text},
+                {"role": "assistant", "content": output_text}
+            ],
+            "metadata": {
+                "run_id": run.id,
+                "scores": scores
+            }
+        })
 
 # 6. 저장
 output_path = "book_letter_fine_tuning_dataset.jsonl"

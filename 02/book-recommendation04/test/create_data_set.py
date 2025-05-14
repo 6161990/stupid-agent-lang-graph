@@ -13,7 +13,6 @@ langchain_traceing_v2 = os.getenv("LANGCHAIN_TRACING_V2")
 langchain_endpoint = os.getenv("LANGCHAIN_ENDPOINT")
 langchain_key = os.getenv("LANGCHAIN_API_KEY")
 
-
 client = Client()
 strftime = datetime.now().strftime("%Y%m%d-%H%M%S")
 dataset_name = "book-letter-eval" + strftime
@@ -34,6 +33,7 @@ with open("book_letter_eval_dataset.jsonl", "r", encoding="utf-8") as f:
 
 print("✅ LangStudio Dataset 업로드 완료")
 
+
 # 에이전트 실행용 함수 정의
 def run_agent(inputs: dict) -> dict:
     graph = create_book_letter_graph()
@@ -50,7 +50,6 @@ client.evaluate(
 
 print("✅ LangStudio 자동 평가 실행 완료!")
 
-
 # 5. 평가 결과 기반 fine-tuning 데이터셋 추출
 fine_tune_data = []
 
@@ -64,23 +63,28 @@ for run in runs:
     feedbacks = client.list_feedback(run_id=run.id)
     scores = {fb.key: fb.score for fb in feedbacks}
 
-    if scores.get("category_match") == 1.0 and scores.get("embedding_distance_score", 0) >= 0.9:
-        example_id = run.extra.get("metadata").get("reference_example_id")
-        example = client.read_example(example_id)
+    if scores.get("category_match") == 1.0 and scores.get("embedding_distance_score", 0) >= 0.8:
+        metadata = run.extra.get("metadata", {})
+        example_id = metadata.get("reference_example_id")
 
+        if not example_id:
+            continue  # reference가 없는 경우 skip
+
+        try:
+            example = client.read_example(example_id)
+        except Exception as e:
+            print(f"⚠️ 예시 불러오기 실패: {example_id} - {e}")
+            continue
         input_text = example.inputs.get("keyword")
-        output_text = example.outputs.get("messages")[0].get("content")
+        output_messages = example.outputs.get("messages", [])
 
-        fine_tune_data.append({
-            "messages": [
-                {"role": "user", "content": input_text},
-                {"role": "assistant", "content": output_text}
-            ],
-            "metadata": {
-                "run_id": str(run.id),
-                "scores": {k: float(v) if isinstance(v, (int, float)) else bool(v) for k, v in scores.items() if isinstance(v, (int, float, bool, type(None)))}
-            }
-        })
+        if input_text and output_messages and hasattr(output_messages[0], "content"):
+            output_text = output_messages[0]["content"]
+
+            fine_tune_data.append({
+                "prompt": input_text.strip(),
+                "completion": output_text.strip() + "\n"  # OpenAI 규칙: \n 마무리
+            })
 
 # 6. 저장
 output_path = "book_letter_fine_tuning_dataset.jsonl"

@@ -48,7 +48,7 @@ client.evaluate(
     description="주어진 카테고리 내에서만 정의하도록 프롬포트 명확하게 가이드"
 )
 
-print("✅ LangStudio 자동 평가 실행 완료! ")
+print("✅ LangStudio 자동 평가 실행 완료!")
 
 
 # 5. 평가 결과 기반 fine-tuning 데이터셋 추출
@@ -64,7 +64,7 @@ for run in runs:
     feedbacks = client.list_feedback(run_id=run.id)
     scores = {fb.key: fb.score for fb in feedbacks}
 
-    if scores.get("category_match") == 1.0 and scores.get("embedding_distance_score", 0) >= 0.85:
+    if scores.get("category_match") == 1.0 and scores.get("embedding_distance_score", 0) >= 0.9:
         example_id = run.extra.get("metadata").get("reference_example_id")
         example = client.read_example(example_id)
 
@@ -77,8 +77,8 @@ for run in runs:
                 {"role": "assistant", "content": output_text}
             ],
             "metadata": {
-                "run_id": run.id,
-                "scores": scores
+                "run_id": str(run.id),
+                "scores": {k: float(v) if isinstance(v, (int, float)) else bool(v) for k, v in scores.items() if isinstance(v, (int, float, bool, type(None)))}
             }
         })
 

@@ -2,39 +2,72 @@ from langchain_community.utils.math import cosine_similarity
 from langchain_openai import OpenAIEmbeddings
 from typing import List
 
-def evaluate_letter(letter: str, criteria: dict) -> dict:
-    results = {}
+def evaluate_letter(letter: str, criteria: dict) -> List[dict]:
+    results = []
 
     if criteria.get("should_start_with_greeting"):
         greetings = ["안녕하세요", "오늘 하루도", "어디선가", "지친 하루"]
-        results["starts_with_greeting"] = any(letter.strip().startswith(g) for g in greetings)
+        matched = any(letter.strip().startswith(g) for g in greetings)
+        results.append({
+            "key": "starts_with_greeting",
+            "score": matched,
+            "comment": f"기준 'starts_with_greeting' 평가 결과: {'통과' if matched else '실패'}"
+        })
 
     if criteria.get("should_end_without_recipient"):
         forbidden = ["감사합니다", "드림", "당신의", "올림"]
-        results["ends_without_recipient"] = not any(f in letter[-50:] for f in forbidden)
+        matched = not any(f in letter[-50:] for f in forbidden)
+        results.append({
+            "key": "ends_without_recipient",
+            "score": matched,
+            "comment": f"기준 'ends_without_recipient' 평가 결과: {'통과' if matched else '실패'}"
+        })
 
     if criteria.get("should_use_question_title"):
         title_line = letter.strip().split("\n")[0]
-        results["question_title"] = "?" in title_line
+        matched = "?" in title_line
+        results.append({
+            "key": "question_title",
+            "score": matched,
+            "comment": f"기준 'question_title' 평가 결과: {'통과' if matched else '실패'}"
+        })
 
     if "book_title_count" in criteria:
         count = letter.count("『")
-        results["book_title_count"] = count >= criteria["book_title_count"]
+        required = criteria["book_title_count"]
+        matched = count >= required
+        results.append({
+            "key": "book_title_count",
+            "score": matched,
+            "comment": f"기준 'book_title_count' 평가 결과: {count}/{required}"
+        })
 
     if criteria.get("should_include_concrete_examples"):
         keywords = ["사례", "경험", "현장", "현실", "살면서"]
-        results["concrete_examples"] = any(k in letter for k in keywords)
+        matched = any(k in letter for k in keywords)
+        results.append({
+            "key": "concrete_examples",
+            "score": matched,
+            "comment": f"기준 'concrete_examples' 평가 결과: {'통과' if matched else '실패'}"
+        })
 
     if "tone" in criteria:
-        if criteria["tone"] == "감성":
+        tone = criteria["tone"]
+        if tone == "감성":
             tone_keywords = ["위로", "마음", "조용히", "토닥"]
-        elif criteria["tone"] == "전문적":
+        elif tone == "전문적":
             tone_keywords = ["전략", "경영", "데이터", "분석"]
         else:
             tone_keywords = []
-        results["tone_match"] = any(k in letter for k in tone_keywords)
+        matched = any(k in letter for k in tone_keywords)
+        results.append({
+            "key": "tone_match",
+            "score": matched,
+            "comment": f"기준 'tone_match' 평가 결과: {'통과' if matched else '실패'}"
+        })
 
     return results
+
 
 # 유사도 계산
 def compute_similarity(text1: str, text2: str) -> float:
@@ -43,7 +76,7 @@ def compute_similarity(text1: str, text2: str) -> float:
     vec2 = embedder.embed_query(text2)
     return float(cosine_similarity([vec1], [vec2])[0][0])
 
-def smart_evaluate(run, example) -> List[dict]:
+def evaluate_all(run, example) -> List[dict]:
     results = []
 
     expected_category = example.outputs.get("category")
@@ -73,5 +106,9 @@ def smart_evaluate(run, example) -> List[dict]:
             "score": None,
             "comment": f"유사도 평가 실패: {str(e)}"
         })
+
+    if example.outputs.get("criteria"):
+        letter_criteria = evaluate_letter(actual, example.outputs["criteria"])
+        results.extend(letter_criteria)
 
     return results

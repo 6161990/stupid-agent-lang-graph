@@ -4,7 +4,7 @@ from datetime import datetime
 from dotenv import load_dotenv
 from langsmith.client import Client
 from node import create_book_letter_graph  # 네가 만든 LangGraph 함수
-from evaluator import smart_evaluate
+from evaluator import evaluate_all
 
 # 환경변수 로드
 load_dotenv()
@@ -43,54 +43,54 @@ def run_agent(inputs: dict) -> dict:
 client.evaluate(
     run_agent,
     data=dataset_name,
-    evaluators=[smart_evaluate],
+    evaluators=[evaluate_all],
     experiment_prefix="book-letter-eval",
     description="주어진 카테고리 내에서만 정의하도록 프롬포트 명확하게 가이드"
 )
 
 print("✅ LangStudio 자동 평가 실행 완료!")
 
-# 5. 평가 결과 기반 fine-tuning 데이터셋 추출
-fine_tune_data = []
-
-runs = client.list_runs(
-    project_name="evaluators",
-    execution_order=1,
-    run_type="chain"
-)
-
-for run in runs:
-    feedbacks = client.list_feedback(run_id=run.id)
-    scores = {fb.key: fb.score for fb in feedbacks}
-
-    if scores.get("category_match") == 1.0 and scores.get("embedding_distance_score", 0) >= 0.8:
-        metadata = run.extra.get("metadata", {})
-        example_id = metadata.get("reference_example_id")
-
-        if not example_id:
-            continue  # reference가 없는 경우 skip
-
-        try:
-            example = client.read_example(example_id)
-        except Exception as e:
-            print(f"⚠️ 예시 불러오기 실패: {example_id} - {e}")
-            continue
-        input_text = example.inputs.get("keyword")
-        output_messages = example.outputs.get("messages", [])
-
-        if input_text and output_messages and hasattr(output_messages[0], "content"):
-            output_text = output_messages[0]["content"]
-
-            fine_tune_data.append({
-                "prompt": input_text.strip(),
-                "completion": output_text.strip() + "\n"  # OpenAI 규칙: \n 마무리
-            })
-
-# 6. 저장
-output_path = "book_letter_fine_tuning_dataset.jsonl"
-with open(output_path, "w", encoding="utf-8") as f:
-    for item in fine_tune_data:
-        json.dump(item, f, ensure_ascii=False)
-        f.write("\n")
-
-print(f"✅ Fine-tuning 데이터셋 저장 완료: {output_path}")
+# # 5. 평가 결과 기반 fine-tuning 데이터셋 추출
+# fine_tune_data = []
+#
+# runs = client.list_runs(
+#     project_name="evaluators",
+#     execution_order=1,
+#     run_type="chain"
+# )
+#
+# for run in runs:
+#     feedbacks = client.list_feedback(run_id=run.id)
+#     scores = {fb.key: fb.score for fb in feedbacks}
+#
+#     if scores.get("category_match") == 1.0 and scores.get("embedding_distance_score", 0) >= 0.8:
+#         metadata = run.extra.get("metadata", {})
+#         example_id = metadata.get("reference_example_id")
+#
+#         if not example_id:
+#             continue  # reference가 없는 경우 skip
+#
+#         try:
+#             example = client.read_example(example_id)
+#         except Exception as e:
+#             print(f"⚠️ 예시 불러오기 실패: {example_id} - {e}")
+#             continue
+#         input_text = example.inputs.get("keyword")
+#         output_messages = example.outputs.get("messages", [])
+#
+#         if input_text and output_messages and hasattr(output_messages[0], "content"):
+#             output_text = output_messages[0]["content"]
+#
+#             fine_tune_data.append({
+#                 "prompt": input_text.strip(),
+#                 "completion": output_text.strip() + "\n"  # OpenAI 규칙: \n 마무리
+#             })
+#
+# # 6. 저장
+# output_path = "book_letter_fine_tuning_dataset.jsonl"
+# with open(output_path, "w", encoding="utf-8") as f:
+#     for item in fine_tune_data:
+#         json.dump(item, f, ensure_ascii=False)
+#         f.write("\n")
+#
+# print(f"✅ Fine-tuning 데이터셋 저장 완료: {output_path}")

@@ -1,6 +1,5 @@
 import json
 
-# messages 필드를 추가한 자동 평가용 + 커스텀 평가용 복합 테스트셋
 test_cases = [
     {
         "inputs": {
